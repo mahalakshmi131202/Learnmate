@@ -8,9 +8,6 @@ LearnMate is a distributed web-based learning support system designed to assist 
 - Sai Sri Harsha Vardhan Chalichama
 - Maha Lakshmi Malli
 
-## Current Status
-Week 1 – Project setup and basic structure is complete.
-
 ## Technologies (Planned)
 - Python (FastAPI)
 - HTML, CSS, JavaScript
