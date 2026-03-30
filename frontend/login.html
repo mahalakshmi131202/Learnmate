@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnMate - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">LearnMate</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="signup.html">Sign Up</a>
+            <a href="login.html">Login</a>
+            <a href="student.html">Student Dashboard</a>
+            <a href="instructor.html">Instructor Dashboard</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Login to LearnMate</h1>
+            <p class="tagline">Access your Student or Instructor Dashboard</p>
+            <p class="description">
+                Sign in with your registered account to continue using the LearnMate platform.
+            </p>
+        </div>
+    </section>
+
+    <section class="dashboard">
+        <div class="ask-section" style="max-width:500px; margin:auto;">
+            <h2>Login</h2>
+
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username">
+
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password">
+
+            <label for="role">Select Role</label>
+            <select id="role">
+                <option value="">Choose Role</option>
+                <option value="student">Student</option>
+                <option value="instructor">Instructor</option>
+            </select>
+
+            <button onclick="loginUser()">Login</button>
+
+            <p id="loginMessage" style="margin-top:15px; color:#2f80ed;"></p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2026 LearnMate. All Rights Reserved.</p>
+        <p>Distributed AI Tutor for Remote Learning</p>
+    </footer>
+
+    <script>
+        async function loginUser() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const role = document.getElementById("role").value;
+            const message = document.getElementById("loginMessage");
+
+            if (username === "" || password === "" || role === "") {
+                message.innerText = "Please fill all fields.";
+                return;
+            }
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: role
+                    })
+                });
+
+                const result = await response.json();
+                message.innerText = result.message;
+
+                if (result.message === "Login successful") {
+                    localStorage.setItem("learnmateUser", JSON.stringify(result));
+
+                    if (result.role === "student") {
+                        setTimeout(() => {
+                            window.location.href = "student.html";
+                        }, 1000);
+                    } else if (result.role === "instructor") {
+                        setTimeout(() => {
+                            window.location.href = "instructor.html";
+                        }, 1000);
+                    }
+                }
+            } catch (error) {
+                message.innerText = "Unable to connect to the backend server.";
+            }
+        }
+    </script>
+
+</body>
+</html>
