@@ -1,42 +1,167 @@
+from datetime import datetime, timezone
+import uuid
+from collections import Counter
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
 from backend.ai import generate_ai_response
-from backend.firebase_db import save_question_to_firebase
+from backend.firebase_db import (
+    save_question_to_firebase,
+    get_questions_from_firebase,
+    update_feedback_in_firebase,
+    create_user_in_firebase,
+    get_user_from_firebase
+)
 
 app = FastAPI(title="LearnMate API")
 
-questions_db: List[dict] = []
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Question(BaseModel):
     student_name: str
     question_text: str
+    subject: str
+
+class Feedback(BaseModel):
+    question_id: str
+    satisfaction_status: str
+
+class UserSignup(BaseModel):
+    name: str
+    username: str
+    password: str
+    role: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+    role: str
 
 @app.get("/")
 def root():
-    return {"message": "LearnMate backend running"}
+    return {"message": "LearnMate backend is running"}
+
+@app.post("/signup")
+def signup(user: UserSignup):
+    existing_user = get_user_from_firebase(user.username)
+
+    if existing_user:
+        return {"message": "Username already exists"}
+
+    user_data = {
+        "name": user.name,
+        "username": user.username,
+        "password": user.password,
+        "role": user.role
+    }
+
+    create_user_in_firebase(user_data)
+
+    return {"message": "Signup successful"}
+
+@app.post("/login")
+def login(user: UserLogin):
+    existing_user = get_user_from_firebase(user.username)
+
+    if not existing_user:
+        return {"message": "User not found"}
+
+    if (
+        existing_user.get("password") == user.password and
+        existing_user.get("role") == user.role
+    ):
+        return {
+            "message": "Login successful",
+            "name": existing_user.get("name"),
+            "role": existing_user.get("role")
+        }
+
+    return {"message": "Invalid username, password, or role"}
 
 @app.post("/submit-question")
 def submit_question(question: Question):
-
     ai_answer = generate_ai_response(question.question_text)
 
     record = {
+        "id": str(uuid.uuid4()),
         "student_name": question.student_name,
         "question_text": question.question_text,
-        "ai_response": ai_answer
+        "subject": question.subject,
+        "ai_response": ai_answer,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "satisfaction_status": "pending"
     }
 
-    questions_db.append(record)
     save_question_to_firebase(record)
 
     return {
-        "message": "Question received",
-        "ai_response": ai_answer
+        "message": "Question received successfully",
+        "question_id": record["id"],
+        "ai_response": ai_answer,
+        "timestamp": record["timestamp"]
     }
 
+@app.post("/submit-feedback")
+def submit_feedback(feedback: Feedback):
+    update_feedback_in_firebase(feedback.question_id, feedback.satisfaction_status)
+    return {"message": "Feedback submitted successfully"}
+
 @app.get("/instructor-dashboard")
-def instructor_dashboard():
+def instructor_dashboard(subject: str = "All"):
+    questions = get_questions_from_firebase()
+
+    if subject != "All":
+        questions = [
+            q for q in questions
+            if q.get("subject", "").strip().lower() == subject.strip().lower()
+        ]
+
+    questions.sort(key=lambda x: x.get("timestamp", ""))
+
+    repeated_questions = Counter()
+    topic_keywords = Counter()
+    not_satisfied_count = 0
+    subjects_set = set()
+
+    keywords_list = [
+        "sql", "nosql", "database", "cloud", "iaas", "paas", "saas",
+        "distributed system", "cap theorem", "consistency", "availability",
+        "partition tolerance", "scalability", "fault tolerance",
+        "replication", "load balancing", "latency", "throughput",
+        "consensus algorithm", "raft", "paxos", "virtualization",
+        "containerization", "ai", "artificial intelligence", "nlp"
+    ]
+
+    all_questions = get_questions_from_firebase()
+    for item in all_questions:
+        subject_name = item.get("subject", "").strip()
+        if subject_name:
+            subjects_set.add(subject_name)
+
+    for q in questions:
+        question_text = q.get("question_text", "").strip().lower()
+
+        if question_text:
+            repeated_questions[question_text] += 1
+
+            for keyword in keywords_list:
+                if keyword in question_text:
+                    topic_keywords[keyword] += 1
+
+        if q.get("satisfaction_status") == "not_satisfied":
+            not_satisfied_count += 1
+
     return {
-        "questions": questions_db
+        "total_questions": len(questions),
+        "not_satisfied_count": not_satisfied_count,
+        "questions": questions,
+        "repeated_questions": dict(repeated_questions),
+        "topic_analytics": dict(topic_keywords),
+        "subjects": sorted(list(subjects_set))
     }
