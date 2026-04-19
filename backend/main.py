@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import uuid
+import re
 from collections import Counter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +43,23 @@ class UserLogin(BaseModel):
     username: str
     password: str
     role: str
+
+def extract_topic_with_ai(question_text: str, subject: str, existing_topics: list) -> str:
+    existing_str = ", ".join(existing_topics) if existing_topics else "None"
+
+    prompt = f"""Extract the single main topic from this student question.
+    subject area: {subject}
+    Question : {question_text}
+    Already existing topics in this subject: {existing_str}
+
+    Rules:
+    - Return ONLY the main topic name with 2 to 4 words maximum.
+    - it should be a proper concept name related to the subject.
+    - if the question matches an existing topic, return EXACTLY that existing topic name.
+    - no explanations, just the topic name.
+Topic:"""
+    topic = generate_ai_response(prompt)
+    return topic.strip()
 
 @app.get("/")
 def root():
@@ -88,11 +106,22 @@ def login(user: UserLogin):
 def submit_question(question: Question):
     ai_answer = generate_ai_response(question.question_text)
 
+    all_questions = get_questions_from_firebase()
+    existing_topics = list(set(
+        q.get("topic", "").strip()
+        for q in all_questions
+        if q.get("subject", "").strip().lower() == question.subject.strip().lower()
+        and q.get("topic", "").strip()
+    ))
+
+    topic = extract_topic_with_ai(question.question_text, question.subject, existing_topics)
+
     record = {
         "id": str(uuid.uuid4()),
         "student_name": question.student_name,
         "question_text": question.question_text,
         "subject": question.subject,
+        "topic": topic,
         "ai_response": ai_answer,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "satisfaction_status": "pending"
@@ -122,21 +151,13 @@ def instructor_dashboard(subject: str = "All"):
             if q.get("subject", "").strip().lower() == subject.strip().lower()
         ]
 
-    questions.sort(key=lambda x: x.get("timestamp", ""))
+    questions.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
-    repeated_questions = Counter()
-    topic_keywords = Counter()
+
+    topic_analytics = Counter()
     not_satisfied_count = 0
     subjects_set = set()
 
-    keywords_list = [
-        "sql", "nosql", "database", "cloud", "iaas", "paas", "saas",
-        "distributed system", "cap theorem", "consistency", "availability",
-        "partition tolerance", "scalability", "fault tolerance",
-        "replication", "load balancing", "latency", "throughput",
-        "consensus algorithm", "raft", "paxos", "virtualization",
-        "containerization", "ai", "artificial intelligence", "nlp"
-    ]
 
     all_questions = get_questions_from_firebase()
     for item in all_questions:
@@ -145,14 +166,9 @@ def instructor_dashboard(subject: str = "All"):
             subjects_set.add(subject_name)
 
     for q in questions:
-        question_text = q.get("question_text", "").strip().lower()
-
-        if question_text:
-            repeated_questions[question_text] += 1
-
-            for keyword in keywords_list:
-                if keyword in question_text:
-                    topic_keywords[keyword] += 1
+        topic = q.get("topic", "").strip()
+        if topic:
+            topic_analytics[topic] += 1
 
         if q.get("satisfaction_status") == "not_satisfied":
             not_satisfied_count += 1
@@ -161,7 +177,6 @@ def instructor_dashboard(subject: str = "All"):
         "total_questions": len(questions),
         "not_satisfied_count": not_satisfied_count,
         "questions": questions,
-        "repeated_questions": dict(repeated_questions),
-        "topic_analytics": dict(topic_keywords),
+        "topic_analytics": dict(topic_analytics),
         "subjects": sorted(list(subjects_set))
     }
