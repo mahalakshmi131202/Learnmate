@@ -364,3 +364,174 @@ tr:hover{
         align-items:flex-start;
     }
 }
+
+ .date-filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .date-filter-bar label {
+            font-weight: bold;
+        }
+        .date-filter-bar input[type="date"] {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .date-filter-bar button {
+            padding: 6px 14px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .date-filter-bar button.clear-btn {
+            background-color: #6b7280;
+        }
+        .date-filter-bar button:hover {
+            opacity: 0.88;
+        }
+        #dateRangeInfo {
+            font-size: 13px;
+            color: #555;
+            margin-top: 6px;
+        }
+/* Dashboard Topbar */
+.dashboard-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 16px;
+    gap: 16px;
+}
+
+.left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 20px;
+}
+
+.left button {
+    background: #2f80ed;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-size: 17px;
+    cursor: pointer;
+}
+
+.left button:hover {
+    background: #1648c0;
+}
+
+.middle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-align: center;
+    gap: 5px;
+}
+
+.subject-name-display {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.2px;
+    background-color: #2f80ed;
+    padding: 6px 14px;
+    border-radius: 6px;
+}
+
+.middle .last-updated {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* gap: 8px; */
+}
+
+.single-date-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #2f80ed;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    /* padding: 6px 10px; */
+    font-size: 13px;
+    cursor: pointer;
+    color: white;
+    white-space: nowrap;
+    min-width: 160px;
+    text-align: left;
+    font-family: inherit;
+}
+
+.single-date-btn:hover {
+    background: #086ae9;
+}
+
+.date_name {
+    display: flex;
+    gap: 6px;
+}
+
+.date_name button {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #374151;
+    font-family: inherit;
+}
+
+.date_name button:hover {
+    background: #e2e8f0;
+}
+
+.date_name button.active {
+    background: #1a56db;
+    color: #fff;
+    border-color: #1a56db;
+}
+
+.date_name button.clear-btn {
+    background: #f8fafc;
+    color: #6b7280;
+}
+
+.date_name button.clear-btn:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+
+.date-filter-bar {
+    display: none !important;
+}
+
+#dateRangeInfo {
+    display: none !important;
+}

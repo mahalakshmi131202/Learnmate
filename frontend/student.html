@@ -31,14 +31,20 @@
             <input type="text" id="studentName" placeholder="Enter your name">
 
             <label for="subjectSelect">Subject / Class</label>
-            <select id="subjectSelect">
+            <select id="subjectSelect" onchange="handleSubjectChange()">
                 <option value="">Select Subject</option>
                 <option value="Distributed Systems">Distributed Systems</option>
                 <option value="English">English</option>
                 <option value="Math">Math</option>
                 <option value="Database Systems">Database Systems</option>
                 <option value="Cloud Computing">Cloud Computing</option>
+                <option value="Other">Other (Not listed)</option>
             </select>
+
+            <div id="customSubjectDiv" style="display:none; margin-top:8px;">
+                <label for="customSubject">Enter your subject name</label>
+                <input type="text" id="customSubject" placeholder="e.g. Python, Machine Learning...">
+            </div>
 
             <label for="questionInput">Your Question</label>
             <textarea id="questionInput" placeholder="Type your question here..."></textarea>
@@ -93,14 +99,32 @@
             window.location.href = "login.html";
         }
 
+        function handleSubjectChange() {
+            const selected = document.getElementById("subjectSelect").value;
+            const customDiv = document.getElementById("customSubjectDiv");
+            customDiv.style.display = selected === "Other" ? "block" : "none";
+            if (selected !== "Other") {
+                document.getElementById("customSubject").value = "";
+            }
+        }
+
         async function askQuestion() {
             const name = document.getElementById("studentName").value.trim();
-            const subject = document.getElementById("subjectSelect").value;
+            const selected = document.getElementById("subjectSelect").value;
             const question = document.getElementById("questionInput").value.trim();
 
-            if (name === "" || subject === "" || question === "") {
+            if (name === "" || selected === "" || question === "") {
                 alert("Please enter your name, select subject, and type your question.");
                 return;
+            }
+
+            let subject = selected;
+            if (selected === "Other") {
+                subject = document.getElementById("customSubject").value.trim();
+                if (!subject) {
+                    alert("Please enter your subject name.");
+                    return;
+                }
             }
 
             try {
@@ -127,11 +151,23 @@
 
                 document.getElementById("aiResponse").innerHTML =
                     "<b>AI Response:</b> " + result.ai_response +
-                    "<br><b>Time:</b> " + new Date(result.timestamp).toLocaleString('en-US', {timeZone: 'America/New_York',year: 'numeric',month: 'short',day: 'numeric',hour: '2-digit',minute: '2-digit',second: '2-digit'});
-				
-				document.getElementById("feedbackSection").style.display = "block";
+                    "<br><b>Time:</b> " + new Date(result.timestamp).toLocaleString('en-US', {
+                        timeZone: 'America/New_York',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+
+                document.getElementById("feedbackSection").style.display = "block";
                 document.getElementById("feedbackMessage").innerText = "";
                 document.getElementById("questionInput").value = "";
+
+                document.getElementById("subjectSelect").value = "";
+                document.getElementById("customSubjectDiv").style.display = "none";
+                document.getElementById("customSubject").value = "";
 
             } catch (error) {
                 document.getElementById("aiResponse").innerHTML =

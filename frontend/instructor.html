@@ -12,7 +12,6 @@
         <div class="logo">LearnMate</div>
         <div class="nav-links" id="navLinks"></div>
     </nav>
-	
 
     <section class="instructor-dashboard">
         <h1>Instructor Dashboard</h1>
@@ -30,13 +29,6 @@
             </div>
 
             <div class="analytics-card">
-                <h3>Top Repeated Questions</h3>
-                <ul id="repeatedQuestionsList">
-                    <li>No repeated questions yet.</li>
-                </ul>
-            </div>
-
-            <div class="analytics-card">
                 <h3>Topic Analytics</h3>
                 <ul id="topicAnalyticsList">
                     <li>No topic analytics available yet.</li>
@@ -45,15 +37,37 @@
         </div>
 
         <div class="dashboard-topbar">
-            <div>
-                <label for="subjectFilter"><b>Filter by Subject:</b></label>
-                <select id="subjectFilter" onchange="loadQuestions()">
-                    <option value="All">All Subjects</option>
-                </select>
+
+            <div class="left">
+                <div id="subj_filter">
+                    <label for="subjectFilter"><b>Filter by Subject:</b></label>
+                    <select id="subjectFilter" onchange="loadQuestions()">
+                        <option value="All">All Subjects</option>
+                    </select>
+                </div>
+                <button onclick="loadQuestions()">↻ Refresh Questions</button>
             </div>
 
-            <p id="lastUpdated" class="last-updated">Last Updated: --</p>
-            <button onclick="loadQuestions()">Refresh Questions</button>
+            <div class="middle">
+                <div id="subjectLabel" style="display:none;">
+                    <div class="subject-name-display" id="subjectLabelText"></div>
+                </div>
+                <p id="lastUpdated" class="last-updated">Last Updated: --</p>
+            </div>
+
+            <div class="right">
+                <button class="single-date-btn" onclick="document.getElementById('singleDate').showPicker()">
+                    <span>📅</span>
+                    <span id="dateDisplay">Select Date</span>
+                </button>
+                <input type="date" id="singleDate" onchange="onSingleDateChange(this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;" />
+                <div class="date_name">
+                    <button id="btnToday" onclick="setToday()">Today</button>
+                    <button id="btnWeek" onclick="setThisWeek()">This Week</button>
+                    <button id="btnClear" class="clear-btn" onclick="clearDateFilter()">Clear</button>
+                </div>
+            </div>
+
         </div>
 
         <div class="table-container">
@@ -83,8 +97,9 @@
     </footer>
 
     <script>
-        let subjectsLoaded = false;
-
+        let instructorSubject = "All";
+        let allQuestions = [];
+        let activeDateMode = null; 
         function loadInstructorNavbar() {
             const user = JSON.parse(localStorage.getItem("learnmateUser"));
 
@@ -94,11 +109,22 @@
                 return;
             }
 
+            instructorSubject = user.subject || "All";
+
             document.getElementById("navLinks").innerHTML = `
                 <a href="index.html">Home</a>
                 <a href="instructor.html">Instructor Dashboard</a>
                 <a href="#" onclick="logoutUser()">Logout</a>
             `;
+
+            if (instructorSubject && instructorSubject !== "All") {
+                document.getElementById("subj_filter").style.display = "none";
+                document.getElementById("subjectLabel").style.display = "block";
+                document.getElementById("subjectLabelText").textContent = instructorSubject;
+            } else {
+                document.getElementById("subj_filter").style.display = "block";
+                document.getElementById("subjectLabel").style.display = "none";
+            }
         }
 
         function logoutUser() {
@@ -106,57 +132,171 @@
             window.location.href = "login.html";
         }
 
+        function getActiveSubject() {
+            if (instructorSubject && instructorSubject !== "All") return instructorSubject;
+            return document.getElementById("subjectFilter").value;
+        }
+
+        function toDateString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
+        function fmt(d) {
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function setQuickActive(id) {
+            ['btnToday', 'btnWeek'].forEach(b => document.getElementById(b).classList.remove('active'));
+            if (id) document.getElementById(id).classList.add('active');
+        }
+
+        function onSingleDateChange(val) {
+            setQuickActive(null);
+            if (!val) { clearDateFilter(); return; }
+            activeDateMode = 'single';
+            const d = new Date(val + 'T00:00:00');
+            document.getElementById('dateDisplay').textContent = fmt(d);
+            applyDateFilter();
+        }
+
+        function setToday() {
+            const today = toDateString(new Date());
+            document.getElementById("singleDate").value = today;
+            document.getElementById("dateDisplay").textContent = "Today — " + fmt(new Date());
+            activeDateMode = 'today';
+            setQuickActive('btnToday');
+            applyDateFilter();
+        }
+
+        function setThisWeek() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+            document.getElementById("singleDate").value = "";
+            document.getElementById("dateDisplay").textContent = fmt(monday) + " – " + fmt(now);
+            activeDateMode = 'week';
+            setQuickActive('btnWeek');
+            document.getElementById("singleDate").dataset.weekFrom = toDateString(monday);
+            document.getElementById("singleDate").dataset.weekTo = toDateString(now);
+            applyDateFilter();
+        }
+
+        function clearDateFilter() {
+            document.getElementById("singleDate").value = "";
+            document.getElementById("dateDisplay").textContent = "Select Date";
+            activeDateMode = null;
+            setQuickActive(null);
+            applyDateFilter();
+        }
+
+        function applyDateFilter() {
+            let filtered = [...allQuestions];
+
+            if (activeDateMode === 'single' || activeDateMode === 'today') {
+                const val = document.getElementById("singleDate").value;
+                if (val) {
+                    const from = new Date(val + "T00:00:00");
+                    const to = new Date(val + "T23:59:59");
+                    filtered = filtered.filter(q => {
+                        const t = new Date(q.timestamp);
+                        return t >= from && t <= to;
+                    });
+                }
+            } else if (activeDateMode === 'week') {
+                const fromVal = document.getElementById("singleDate").dataset.weekFrom;
+                const toVal = document.getElementById("singleDate").dataset.weekTo;
+                if (fromVal) {
+                    const from = new Date(fromVal + "T00:00:00");
+                    filtered = filtered.filter(q => new Date(q.timestamp) >= from);
+                }
+                if (toVal) {
+                    const to = new Date(toVal + "T23:59:59");
+                    filtered = filtered.filter(q => new Date(q.timestamp) <= to);
+                }
+            }
+
+            document.getElementById("totalQuestions").innerText = filtered.length;
+
+            const notSatisfiedCount = filtered.filter(q => q.satisfaction_status === "not_satisfied").length;
+            document.getElementById("notSatisfiedCount").innerText = notSatisfiedCount + " / " + filtered.length;
+
+            renderTable(filtered);
+        }
+
+        function renderTable(questions) {
+            const tableBody = document.querySelector("#questionTable tbody");
+            tableBody.innerHTML = "";
+
+            if (!questions || questions.length === 0) {
+                tableBody.innerHTML =
+                    '<tr><td colspan="6" style="text-align:center;">No questions found for selected date range.</td></tr>';
+                return;
+            }
+
+            questions.forEach(q => {
+                const row = document.createElement("tr");
+
+                let feedbackText = "Pending";
+                if (q.satisfaction_status === "satisfied") feedbackText = "Satisfied";
+                else if (q.satisfaction_status === "not_satisfied") feedbackText = "Not Satisfied";
+
+                row.innerHTML =
+                    "<td>" + q.student_name + "</td>" +
+                    "<td>" + (q.subject || "-") + "</td>" +
+                    "<td>" + q.question_text + "</td>" +
+                    "<td>" + q.ai_response + "</td>" +
+                    "<td>" + new Date(q.timestamp).toLocaleString('en-US', {
+                        timeZone: 'America/New_York',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    }) + "</td>" +
+                    "<td>" + feedbackText + "</td>";
+
+                tableBody.appendChild(row);
+            });
+        }
+
         async function loadQuestions() {
             try {
-                const selectedSubject = document.getElementById("subjectFilter").value;
-                const response = await fetch("http://127.0.0.1:8000/instructor-dashboard?subject=" + encodeURIComponent(selectedSubject));
+                const activeSubject = getActiveSubject();
+                const response = await fetch("http://127.0.0.1:8000/instructor-dashboard?subject=" + encodeURIComponent(activeSubject));
                 const data = await response.json();
 
                 document.getElementById("lastUpdated").innerText =
                     "Last Updated: " + new Date().toLocaleTimeString();
 
-                document.getElementById("totalQuestions").innerText = data.total_questions || 0;
-                document.getElementById("notSatisfiedCount").innerText = data.not_satisfied_count || 0;
+                allQuestions = data.questions || [];
 
-                if (!subjectsLoaded) {
+                if (instructorSubject === "All") {
                     const subjectFilter = document.getElementById("subjectFilter");
                     const currentValue = subjectFilter.value;
-
                     subjectFilter.innerHTML = '<option value="All">All Subjects</option>';
-
                     (data.subjects || []).forEach(subject => {
                         const option = document.createElement("option");
                         option.value = subject;
                         option.textContent = subject;
                         subjectFilter.appendChild(option);
                     });
-
-                    subjectFilter.value = currentValue || "All";
-                    subjectsLoaded = true;
-                }
-
-                const repeatedList = document.getElementById("repeatedQuestionsList");
-                repeatedList.innerHTML = "";
-
-                const repeatedEntries = Object.entries(data.repeated_questions || {})
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5);
-
-                if (repeatedEntries.length === 0) {
-                    repeatedList.innerHTML = "<li>No repeated questions yet.</li>";
-                } else {
-                    repeatedEntries.forEach(([question, count]) => {
-                        const li = document.createElement("li");
-                        li.innerHTML = "<b>" + question + "</b> — " + count + " time(s)";
-                        repeatedList.appendChild(li);
-                    });
+                    if ([...subjectFilter.options].some(o => o.value === currentValue)) {
+                        subjectFilter.value = currentValue;
+                    } else {
+                        subjectFilter.value = "All";
+                    }
                 }
 
                 const topicList = document.getElementById("topicAnalyticsList");
                 topicList.innerHTML = "";
-
                 const topicEntries = Object.entries(data.topic_analytics || {})
-                    .sort((a, b) => b[1] - a[1]);
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
 
                 if (topicEntries.length === 0) {
                     topicList.innerHTML = "<li>No topic analytics available yet.</li>";
@@ -168,57 +308,43 @@
                     });
                 }
 
-                const tableBody = document.querySelector("#questionTable tbody");
-                tableBody.innerHTML = "";
-
-                if (!data.questions || data.questions.length === 0) {
-                    tableBody.innerHTML =
-                        '<tr><td colspan="6" style="text-align:center;">No questions available yet for this subject.</td></tr>';
-                    return;
-                }
-
-                data.questions.forEach(q => {
-                    const row = document.createElement("tr");
-
-                    let feedbackText = "Pending";
-
-                    if (q.satisfaction_status === "satisfied") {
-                        feedbackText = "Satisfied";
-                    } else if (q.satisfaction_status === "not_satisfied") {
-                        feedbackText = " Not Satisfied";
-                    }
-
-                    row.innerHTML = "<td>" + q.student_name + "</td>" + "<td>" + (q.subject || "-") + "</td>" + "<td>" + q.question_text + "</td>" +
-					"<td>" + q.ai_response + "</td>" + "<td>" + new Date(q.timestamp).toLocaleString('en-US', {
-					timeZone: 'America/New_York',
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric',
-					hour: '2-digit',
-					minute: '2-digit',
-					second: '2-digit'}) + "</td>" + "<td>" + feedbackText + "</td>";
-
-                    tableBody.appendChild(row);
-                });
+                applyDateFilter();
 
             } catch (error) {
                 const tableBody = document.querySelector("#questionTable tbody");
                 tableBody.innerHTML =
                     '<tr><td colspan="6" style="text-align:center;">Unable to load instructor dashboard data.</td></tr>';
-
-                document.getElementById("repeatedQuestionsList").innerHTML =
-                    "<li>Unable to load repeated question analytics.</li>";
-
                 document.getElementById("topicAnalyticsList").innerHTML =
                     "<li>Unable to load topic analytics.</li>";
-
                 document.getElementById("notSatisfiedCount").innerText = "0";
             }
         }
 
-        loadInstructorNavbar();
-        loadQuestions();
-        setInterval(loadQuestions, 5000);
+        async function initDashboard() {
+            loadInstructorNavbar();
+
+            if (instructorSubject === "All") {
+                try {
+                    const response = await fetch("http://127.0.0.1:8000/instructor-dashboard?subject=All");
+                    const data = await response.json();
+                    const subjectFilter = document.getElementById("subjectFilter");
+                    subjectFilter.innerHTML = '<option value="All">All Subjects</option>';
+                    (data.subjects || []).forEach(subject => {
+                        const option = document.createElement("option");
+                        option.value = subject;
+                        option.textContent = subject;
+                        subjectFilter.appendChild(option);
+                    });
+                } catch (e) {
+                    console.error("Failed to load subjects:", e);
+                }
+            }
+
+            loadQuestions();
+            setInterval(loadQuestions, 5000);
+        }
+
+        initDashboard();
     </script>
 
 </body>
