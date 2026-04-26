@@ -76,7 +76,10 @@ and in another window login as instructor
 so accordingly dashbord will open as per roles
 The student dashboard will show all the functionalities.
 The instructor dashboard will display submitted questions and AI responses and other features.
-
+## Live Demo
+- Frontend: https://learnmateaitutor.netlify.app
+- Backend API: https://learnmate-backend-a96w.onrender.com
+- API Docs: https://learnmate-backend-a96w.onrender.com/docs
 ## Demo Workflow
 1. Start the FastAPI backend server
 2. Open the student portal

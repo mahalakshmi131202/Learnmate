@@ -40,11 +40,24 @@
             <input type="password" id="password" placeholder="Enter your password">
 
             <label for="role">Select Role</label>
-            <select id="role">
+            <select id="role" onchange="handleRoleChange()">
                 <option value="">Choose Role</option>
                 <option value="student">Student</option>
                 <option value="instructor">Instructor</option>
             </select>
+
+            <div id="subjectDiv" style="display:none; margin-top:8px;">
+                <label for="instructorSubject">Your Subject</label>
+                <select id="instructorSubject">
+                    <option value="">Select your subject</option>
+                    <option value="Distributed Systems">Distributed Systems</option>
+                    <option value="English">English</option>
+                    <option value="Math">Math</option>
+                    <option value="Database Systems">Database Systems</option>
+                    <option value="Cloud Computing">Cloud Computing</option>
+                    <option value="All">All Subjects</option>
+                </select>
+            </div>
 
             <button onclick="loginUser()">Login</button>
 
@@ -58,6 +71,15 @@
     </footer>
 
     <script>
+        function handleRoleChange() {
+            const role = document.getElementById("role").value;
+            const subjectDiv = document.getElementById("subjectDiv");
+            subjectDiv.style.display = role === "instructor" ? "block" : "none";
+            if (role !== "instructor") {
+                document.getElementById("instructorSubject").value = "";
+            }
+        }
+
         async function loginUser() {
             const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value.trim();
@@ -69,8 +91,16 @@
                 return;
             }
 
+            if (role === "instructor") {
+                const subject = document.getElementById("instructorSubject").value;
+                if (!subject) {
+                    message.innerText = "Please select your subject.";
+                    return;
+                }
+            }
+
             try {
-                const response = await fetch("https://learnmate-backend-a96w.onrender.com/login", {
+                const response = await fetch("https://learnmate-backend.onrender.com/login", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -86,6 +116,10 @@
                 message.innerText = result.message;
 
                 if (result.message === "Login successful") {
+                    if (result.role === "instructor") {
+                        result.subject = document.getElementById("instructorSubject").value;
+                    }
+
                     localStorage.setItem("learnmateUser", JSON.stringify(result));
 
                     if (result.role === "student") {
