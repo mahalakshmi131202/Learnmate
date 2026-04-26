@@ -1,13 +1,9 @@
-import json
-import os
-
 import firebase_admin
 from firebase_admin import credentials, firestore
 
 # Initialize Firebase
 if not firebase_admin._apps:
-    firebase_key = os.getenv("FIREBASE_KEY") 
-    cred = credentials.Certificate(json.loads(firebase_key))
+    cred = credentials.Certificate("firebase-key.json")
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
@@ -35,7 +31,7 @@ def get_questions_from_firebase():
 def update_feedback_in_firebase(question_id: str, satisfaction_status: str):
     db.collection("questions").document(question_id).update({
         "satisfaction_status": satisfaction_status
-    })
+    }) 
 
 def create_user_in_firebase(user_data: dict):
     username = user_data.get("username")
