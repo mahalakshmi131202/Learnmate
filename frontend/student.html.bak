@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnMate - Student Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+		<div class="nav-links">
+		<a href="index.html">Home</a>
+		<a href="signup.html">Sign Up</a>
+		<a href="login.html">Login</a>
+		<a href="student.html">Student Dashboard</a>
+		<a href="instructor.html">Instructor Dashboard</a>
+		</div>
+    </nav>
+
+
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Welcome to the Student Dashboard</h1>
+            <p class="tagline">AI-Powered Tutor for Remote Learning</p>
+            <p class="description">
+                Ask your academic questions and get instant AI-generated explanations to support your learning during class.
+            </p>
+        </div>
+    </section>
+
+    <section class="dashboard">
+        <div class="ask-section">
+            <h2>Ask the AI Tutor</h2>
+
+            <label for="studentName">Student Name</label>
+            <input type="text" id="studentName" placeholder="Enter your name">
+
+            <label for="subjectSelect">Subject / Class</label>
+            <select id="subjectSelect">
+                <option value="">Select Subject</option>
+                <option value="Distributed Systems">Distributed Systems</option>
+                <option value="IT">IT</option>
+                <option value="Cyber Security">Cyber Security</option>
+                <option value="Database Systems">Database Systems</option>
+                <option value="Cloud Computing">Cloud Computing</option>
+            </select>
+
+            <label for="questionInput">Your Question</label>
+            <textarea id="questionInput" placeholder="Type your question here..."></textarea>
+
+            <button onclick="askQuestion()">Send Question</button>
+        </div>
+
+        <div class="response-section">
+            <h2>AI Tutor Response</h2>
+            <div class="response-card">
+                <p id="questionDisplay">Your submitted question will appear here.</p>
+                <p id="aiResponse">The AI-generated answer will appear here.</p>
+
+                <div id="feedbackSection" style="display:none; margin-top:15px;">
+                    <p><b>Was this answer helpful?</b></p>
+                    <button onclick="submitFeedback('satisfied')">Satisfied</button>
+                    <button onclick="submitFeedback('not_satisfied')">Not Satisfied</button>
+                    <p id="feedbackMessage" style="margin-top:10px; color:#2f80ed;"></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2026 LearnMate. All Rights Reserved.</p>
+        <p>Distributed AI Tutor for Remote Learning</p>
+    </footer>
+
+    <script>
+        let currentQuestionId = null;
+
+        async function askQuestion() {
+            const name = document.getElementById("studentName").value.trim();
+            const subject = document.getElementById("subjectSelect").value;
+            const question = document.getElementById("questionInput").value.trim();
+
+            if (name === "" || subject === "" || question === "") {
+                alert("Please enter your name, select subject, and type your question.");
+                return;
+            }
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/submit-question", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        student_name: name,
+                        subject: subject,
+                        question_text: question
+                    })
+                });
+
+                const result = await response.json();
+
+                currentQuestionId = result.question_id;
+
+                document.getElementById("questionDisplay").innerHTML =
+                    "<b>Student:</b> " + name +
+                    "<br><b>Subject:</b> " + subject +
+                    "<br><b>Question:</b> " + question;
+
+                document.getElementById("aiResponse").innerHTML =
+                    "<b>AI Response:</b> " + result.ai_response +
+                    "<br><b>Time:</b> " + new Date(result.timestamp).toLocaleString();
+
+                document.getElementById("feedbackSection").style.display = "block";
+                document.getElementById("feedbackMessage").innerText = "";
+                document.getElementById("questionInput").value = "";
+
+            } catch (error) {
+                document.getElementById("aiResponse").innerHTML =
+                    "<b>Error:</b> Unable to connect to the backend server.";
+            }
+        }
+
+        async function submitFeedback(status) {
+            if (!currentQuestionId) return;
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/submit-feedback", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        question_id: currentQuestionId,
+                        satisfaction_status: status
+                    })
+                });
+
+                await response.json();
+
+                if (status === "satisfied") {
+                    document.getElementById("feedbackMessage").innerText =
+                        "Thank you. Your feedback has been recorded.";
+                } else {
+                    document.getElementById("feedbackMessage").innerText =
+                        "Your feedback has been sent to the instructor.";
+                }
+            } catch (error) {
+                document.getElementById("feedbackMessage").innerText =
+                    "Unable to submit feedback.";
+            }
+        }
+    </script>
+
+</body>
+</html>

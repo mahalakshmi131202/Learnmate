@@ -1,0 +1,120 @@
+import os
+import re
+from google import genai
+
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+def clean_text(text: str) -> str:
+    # remove markdown symbols
+    text = re.sub(r"\*\*", "", text)   # remove bold **
+    text = re.sub(r"\*", "", text)     # remove *
+    text = re.sub(r"#+", "", text)     # remove headings ###
+    text = re.sub(r"\n\s*\n", "\n", text)  # remove extra empty lines
+    return text.strip()
+
+def generate_ai_response(question_text: str) -> str:
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=f"Answer the following student question in a short and simple academic way. Keep the answer within 60 to 90 words: {question_text}"
+        )
+
+        if response and response.text:
+            return clean_text(response.text)
+
+        return "Unable to generate response at the moment. Please try again."
+
+    except Exception:
+        return "AI service is temporarily unavailable. Please try again later."
+
+'''        
+    # Rule-based for test
+    question = question_text.lower()
+
+    if "distributed system" in question:
+        return "A distributed system consists of multiple computers that communicate and coordinate to achieve a common goal."
+
+    if "cap theorem" in question:
+        return "The CAP theorem states that a distributed system cannot simultaneously guarantee Consistency, Availability, and Partition Tolerance."
+
+    if "consistency" in question:
+        return "Consistency ensures that all nodes in a distributed system see the same data at the same time."
+
+    if "availability" in question:
+        return "Availability means that every request to the system receives a response, even during failures."
+
+    if "partition tolerance" in question:
+        return "Partition tolerance allows a distributed system to continue operating despite network failures."
+
+    if "client server" in question:
+        return "The client-server model is a distributed architecture where clients request services from centralized servers."
+
+    if "peer to peer" in question:
+        return "Peer-to-peer systems distribute workload among nodes without relying on a central server."
+
+    if "scalability" in question:
+        return "Scalability refers to a system's ability to handle increasing load by adding resources."
+
+    if "fault tolerance" in question:
+        return "Fault tolerance enables a system to continue functioning even when some components fail."
+
+    if "replication" in question:
+        return "Replication involves copying data across multiple nodes to improve reliability and availability."
+
+    if "load balancing" in question:
+        return "Load balancing distributes incoming requests across multiple servers to improve performance."
+
+    if "latency" in question:
+        return "Latency is the time taken for a request to travel from client to server and back."
+
+    if "throughput" in question:
+        return "Throughput measures the number of requests a system can process in a given time."
+
+    if "consensus algorithm" in question:
+        return "Consensus algorithms ensure agreement among distributed nodes, such as Paxos or Raft."
+
+    if "raft" in question:
+        return "Raft is a consensus algorithm designed to be understandable and fault-tolerant."
+
+    if "paxos" in question:
+        return "Paxos is a consensus protocol used to achieve agreement in distributed systems."
+
+    if "cloud computing" in question:
+        return "Cloud computing provides on-demand access to shared computing resources over the internet."
+
+    if "iaas" in question:
+        return "Infrastructure as a Service provides virtualized computing resources like servers and storage."
+
+    if "paas" in question:
+        return "Platform as a Service provides a platform for developers to build and deploy applications."
+
+    if "saas" in question:
+        return "Software as a Service delivers applications over the internet without local installation."
+
+    if "virtualization" in question:
+        return "Virtualization allows multiple virtual machines to run on a single physical system."
+
+    if "containerization" in question:
+        return "Containerization packages applications with dependencies to ensure consistency across environments."
+
+    if "database" in question:
+        return "A database stores and manages structured data efficiently for retrieval and updates."
+
+    if "nosql" in question:
+        return "NoSQL databases are designed for scalability and flexible data models."
+
+    if "sql" in question:
+        return "SQL databases use structured schemas and support complex queries."
+
+    if "artificial intelligence" in question or "ai" in question:
+        return "Artificial Intelligence enables systems to analyze data and assist in decision-making."
+
+    if "natural language processing" in question or "nlp" in question:
+        return "Natural Language Processing allows systems to understand and process human language."
+
+    return (
+        f"The AI system has analyzed the question: '{question_text}'. "
+        "A general explanation is provided, and the instructor can clarify further during the lecture."
+    )
+    
+    '''

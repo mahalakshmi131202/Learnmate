@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnMate - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+		<div class="nav-links">
+		<a href="index.html">Home</a>
+		<a href="signup.html">Sign Up</a>
+		<a href="login.html">Login</a>
+		<a href="student.html">Student Dashboard</a>
+		<a href="instructor.html">Instructor Dashboard</a>
+		</div>
+    </nav>
+	
+	
+
+    <section class="home-hero">
+        <div class="home-content">
+            <h1>Welcome to LearnMate</h1>
+            <p class="tagline">Distributed AI Tutor for Remote Learning</p>
+            <p class="description">
+                LearnMate is an AI-powered academic support platform designed for online classes.
+                Students can submit their questions and receive AI-generated explanations, while instructors
+                can monitor doubts, responses, and learning trends through a centralized dashboard.
+            </p>
+
+            <div class="buttons">
+                <a class="btn" href="student.html">Go to Student Dashboard</a>
+                <a class="btn secondary-btn" href="instructor.html">Go to Instructor Dashboard</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="workflow">
+        <h2>How LearnMate Works</h2>
+
+        <div class="workflow-box">
+            <div class="step">
+                <h3>1. Student Asks a Question</h3>
+                <p>Students submit academic doubts during live or remote classes using the student dashboard.</p>
+            </div>
+
+            <div class="step">
+                <h3>2. AI Generates a Response</h3>
+                <p>The backend processes the question and generates an explanation using the AI module.</p>
+            </div>
+
+            <div class="step">
+                <h3>3. Instructor Monitors Learning</h3>
+                <p>Instructors view student questions and AI responses through the instructor dashboard.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <h2>Why Use LearnMate?</h2>
+        <div class="workflow-box">
+            <div class="step">
+                <h3>Instant Doubt Resolution</h3>
+                <p>Students receive quick AI-generated explanations without interrupting the lecture.</p>
+            </div>
+
+            <div class="step">
+                <h3>Instructor Insight</h3>
+                <p>Faculty can understand common student doubts and improve teaching effectiveness.</p>
+            </div>
+
+            <div class="step">
+                <h3>Cloud-Based Support</h3>
+                <p>Questions and responses are stored securely using Firebase cloud database integration.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2026 LearnMate. All Rights Reserved.</p>
+        <p>Distributed AI Tutor for Remote Learning</p>
+    </footer>
+
+</body>
+</html>
