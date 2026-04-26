@@ -267,7 +267,7 @@
         async function loadQuestions() {
             try {
                 const activeSubject = getActiveSubject();
-                const response = await fetch("http://127.0.0.1:8000/instructor-dashboard?subject=" + encodeURIComponent(activeSubject));
+                const response = await fetch("https://learnmate-backend-a96w.onrender.com/instructor-dashboard?subject=" + encodeURIComponent(activeSubject));
                 const data = await response.json();
 
                 document.getElementById("lastUpdated").innerText =
@@ -325,7 +325,7 @@
 
             if (instructorSubject === "All") {
                 try {
-                    const response = await fetch("http://127.0.0.1:8000/instructor-dashboard?subject=All");
+                    const response = await fetch("https://learnmate-backend-a96w.onrender.com/instructor-dashboard?subject=All");
                     const data = await response.json();
                     const subjectFilter = document.getElementById("subjectFilter");
                     subjectFilter.innerHTML = '<option value="All">All Subjects</option>';
