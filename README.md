@@ -47,46 +47,16 @@ and place it in the project root directory as:
 firebase-key.json
 This file is excluded from GitHub using .gitignore.
 
-## How to Run the Project
-
-### 1. Clone the Repository
-git clone <https://github.com/mahalakshmi131202/Learnmate>
-cd LearnMate
-
-### 2. Create Virtual Environment
-python -m venv venv
-venv\Scripts\activate
-
-### 3. Install Dependencies
-pip install -r requirements.txt
-
-### 4. Run Backend Server
-uvicorn backend.main:app --reload
-
-Server will start at:
-https://learnmate-backend-a96w.onrender.com
-
-## Running the Frontend
-Open the following files in a browser:
-frontend/index.html
-then 
-frontend/signup.html for both student and instructor
-then login with student
-and in another window login as instructor
-so accordingly dashbord will open as per roles
-The student dashboard will show all the functionalities.
-The instructor dashboard will display submitted questions and AI responses and other features.
 ## Live Demo
 - Frontend: https://learnmateaitutor.netlify.app
 - Backend API: https://learnmate-backend-a96w.onrender.com
 - API Docs: https://learnmate-backend-a96w.onrender.com/docs
-## Demo Workflow
-1. Start the FastAPI backend server
-2. Open the student portal
-3. Submit a question
-4. AI generates an explanation
-5. Instructor dashboard displays the question
-6. Data is stored in Firebase database
+## How to use Application
+1. Open https://learnmateaitutor.netlify.app
+2. Sign up as a Student or Instructor
+3. Login with Credentials
+4. Student Submits the questions and receive AI-generated answers instantly.
+5. Instructor can monitor all submitted questions and analytics on the dashboard.
 
 ## Course
 Distributed Computing Systems  
